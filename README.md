@@ -1,2 +1,2 @@
-# astar-unity
-A* pathfinding exercise in Unity
+#A* pathfinding exercise in Unity
+A small experiment
