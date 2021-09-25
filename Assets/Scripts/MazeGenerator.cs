@@ -5,6 +5,7 @@ using Priority_Queue;
 
 public class MazeGenerator : MonoBehaviour
 {
+    // direções possíveis de vizinhos
     static readonly Vector2Int[] DIRECTIONS = new Vector2Int[]
     {
         new Vector2Int(1, 0),
@@ -48,10 +49,10 @@ public class MazeGenerator : MonoBehaviour
     float xi = -25.0f;
     float zi = 25.0f;
 
+    // grid específica do grafo
     Node[,] nodeGrid = new Node[mazeDepth, mazeWidth];
 
     List<Node> path = new List<Node>();
-    List<Vector3> pathPositions = new List<Vector3>();
 
     Node start, end;
 
@@ -67,6 +68,7 @@ public class MazeGenerator : MonoBehaviour
                 Vector3 p = tilePrefab.transform.position;
                 p.x = xi + j * tileWidth;
                 p.z = zi - i * tileDepth;
+                // cria o nodo na grid
                 nodeGrid[i, j] = new Node((mazeValue == 1), p, i, j);
 
 
@@ -75,6 +77,7 @@ public class MazeGenerator : MonoBehaviour
             }
         }
 
+        // pontos de início e fim do caminho
         start = nodeGrid[0, 0];
         end = nodeGrid[mazeDepth - 1, mazeWidth - 2];
 
@@ -83,16 +86,18 @@ public class MazeGenerator : MonoBehaviour
 
     void FindPath(Node startNode, Node endNode)
     {
-        SimplePriorityQueue<Node> openNodes = new SimplePriorityQueue<Node>(); // "frontier" no Red Blob, nodos não visitados
+        // SimplePriorityQueue -> pacote NuGet de fila de prioridade (o float menor fica na frente)
+        SimplePriorityQueue<Node, float> openNodes = new SimplePriorityQueue<Node>(); // "frontier" no Red Blob, nodos não visitados
         Dictionary<Node, float> costSoFar = new Dictionary<Node, float>(); // custo até esse nodo        
 
-        openNodes.Enqueue(startNode, 0);
-        startNode.cameFrom = start;
+        openNodes.Enqueue(startNode, 0); // Adiciona na queue
+        startNode.cameFrom = start; // primeiro nodo "veio dele mesmo"
         costSoFar[start] = 0;
 
+        // enquanto existem nodos "abertos"
         while (openNodes.Count > 0)
         {
-            // recupera o nodo não-visitado
+            // recupera o nodo não-visitado (e remove da fila)
             Node current = openNodes.Dequeue();
             Debug.Log("Visitando nodo em " + current.gridX + ", " + current.gridY);
 
@@ -100,6 +105,7 @@ public class MazeGenerator : MonoBehaviour
             if (current == endNode)
             {
                 Debug.Log("Caminho encontrado!");
+                // refaz o caminho de acordo com os nodos "pai"
                 RetracePath(startNode, endNode);
                 return;
             }
@@ -107,9 +113,9 @@ public class MazeGenerator : MonoBehaviour
             // para cada vizinho
             foreach (Node next in GetNeighbours(current))
             {
-                // se ainda não foi visitado, ou se o novo custo for menor (outro caminho)
                 float newCost = costSoFar[current] + GetCost(next, endNode);
 
+                // se ainda não foi visitado, ou se o novo custo for menor (encontrou um caminho melhor)
                 if (!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
                 {
                     // atualiza/seta o custo
@@ -198,6 +204,7 @@ public class MazeGenerator : MonoBehaviour
     {
         Gizmos.color = Color.cyan;
 
+        // desenha os cubos nas posições do caminho encontrado
         foreach (Node n in path)
         {
             Gizmos.DrawCube(n.position, Vector3.one * 2);
